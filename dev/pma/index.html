@@ -17,23 +17,25 @@
         (epoch=mjd(&quot;2018-11-28&quot;), ra=0.058*1e3, dec=-0.122*1e3, σ_ra=0.010*1e3, σ_dec=0.020*1e3),
         (epoch=mjd(&quot;2018-12-15&quot;), ra=0.056*1e3, dec=-0.104*1e3, σ_ra=0.008*1e3, σ_dec=0.008*1e3),
     )
-)</code></pre><p>If you try this you may find that the sampler hits a lot of numerical errors. This is because it will often try to push <code>mass</code> to zero or below, which falls outside the bounds of our prior. This is okay if it happens occaisionally, but on some models this can really lower our efficienty.</p><p>Let&#39;s use <code>Deterministic</code> to reparameterize both <code>mass</code> and <code>a</code> using logarithmic variables:</p><pre><code class="language-julia hljs">@named B = DirectDetections.Planet(
+)</code></pre><p>If you try this you may find that the sampler hits a lot of numerical errors. This is because it will often try to push <code>mass</code> to zero or below, which falls outside the bounds of our prior. This is okay if it happens occaisionally, but on some models this can really lower our efficienty.</p><p>Let&#39;s use <code>Deterministic</code> to reparameterize both <code>mass</code> and <code>a</code> using logarithmic variables:</p><pre><code class="language-julia hljs">
+@named B = DirectDetections.Planet(
     Deterministic(
+        e = (sys, pl) -&gt; 10^pl.loge,
         a = (sys, pl) -&gt; 10^pl.loga,
         mass = (sys, pl) -&gt; 10^pl.logm,
     ),
     Priors(
-        e = TruncatedNormal(0.0, 0.2, 0, 1.0),
-        # Note: these priors also have sharp edges that could lower efficiency.
-        # An alternative could be wide Gaussians centered around pi.
-        τ = Uniform(0, 1),
-        ω = Uniform(0, 2pi),
-        i = Uniform(0, 2pi),
-        Ω = Uniform(0, 2pi),
+        # Note: priors with sharp edges (e.g. Uniform priors) are challenging for HMC samplers.
+        # Using wide Gaussians can be better than uniform priors, for example.
+        τ = Normal(0.5, 1),
+        ω = Normal(pi, 2pi),
+        i = Normal(pi, 2pi),
+        Ω = Normal(pi, 2pi),
 
         # Reparameterize a few properties for better sampling
+        loge = TruncatedNormal(-2, 1.5, -Inf, 0),
         loga = Uniform(-1, 1.5),
-        logm = Uniform(-4, -0.5),
+        logm = Uniform(-2, 0),
     ),
     Astrometry(
         (epoch=mjd(&quot;2016-12-15&quot;), ra=0.133*1e3, dec=-0.174*1e3, σ_ra=0.007*1e3, σ_dec=0.007*1e3),
@@ -56,7 +58,7 @@
     iterations =  50_000,
     tree_depth =     12,
 );</code></pre><h2 id="Analysis"><a class="docs-heading-anchor" href="#Analysis">Analysis</a><a id="Analysis-1"></a><a class="docs-heading-anchor-permalink" href="#Analysis" title="Permalink"></a></h2><h3 id="Mass"><a class="docs-heading-anchor" href="#Mass">Mass</a><a id="Mass-1"></a><a class="docs-heading-anchor-permalink" href="#Mass" title="Permalink"></a></h3><p>Let&#39;s start by plotting a histogram of the companion mass.</p><p><code>chain[&quot;B[mass]&quot;]</code> may be a matrix if multiple indepdendent chains were run, so we call <code>vec</code> to reshape it into a column vector.</p><pre><code class="language-julia hljs">mass_B = chain[&quot;B[mass]&quot;]
-histogram(vec(mass_B), xlabel=&quot;mass (M⊙)&quot;, ylabel=&quot;&quot;, legend=false)</code></pre><p><a href="../assets/pma-astrometry-mass-hist.svg"><img src="../assets/pma-astrometry-mass-hist.png" alt="mass histogram"/></a></p><h3 id="Orbits"><a class="docs-heading-anchor" href="#Orbits">Orbits</a><a id="Orbits-1"></a><a class="docs-heading-anchor-permalink" href="#Orbits" title="Permalink"></a></h3><p>Now plot a sample of orbits from the posterior to see how well they  fit the astrometry and proper motion anomaly.</p><pre><code class="language-julia hljs">plotmodel(chain, HD91312, clims=(7.2, 7.4))</code></pre><p><a href="../assets/pma-astrometry-mass-model.svg"><img src="../assets/pma-astrometry-mass-model.png" alt="orbits"/></a></p><h3 id="Pair-Plot"><a class="docs-heading-anchor" href="#Pair-Plot">Pair Plot</a><a id="Pair-Plot-1"></a><a class="docs-heading-anchor-permalink" href="#Pair-Plot" title="Permalink"></a></h3><p>Visualize all the parameters as a pair-plot:</p><pre><code class="language-julia hljs">##Create a corner plot / pair plot.
+histogram(vec(mass_B), xlabel=&quot;mass (M⊙)&quot;, ylabel=&quot;&quot;, legend=false)</code></pre><p><a href="../assets/pma-astrometry-mass-hist.svg"><img src="../assets/pma-astrometry-mass-hist.svg" alt="mass histogram"/></a></p><h3 id="Orbits"><a class="docs-heading-anchor" href="#Orbits">Orbits</a><a id="Orbits-1"></a><a class="docs-heading-anchor-permalink" href="#Orbits" title="Permalink"></a></h3><p>Now plot a sample of orbits from the posterior to see how well they  fit the astrometry and proper motion anomaly.</p><pre><code class="language-julia hljs">plotmodel(chain, HD91312, clims=(7.2, 7.4))</code></pre><p><a href="../assets/pma-astrometry-mass-model.svg"><img src="../assets/pma-astrometry-mass-model.png" alt="orbits"/></a></p><h3 id="Pair-Plot"><a class="docs-heading-anchor" href="#Pair-Plot">Pair Plot</a><a id="Pair-Plot-1"></a><a class="docs-heading-anchor-permalink" href="#Pair-Plot" title="Permalink"></a></h3><p>Visualize all the parameters as a pair-plot:</p><pre><code class="language-julia hljs">##Create a corner plot / pair plot.
 # We can access any property from the chain specified in Priors or in Deterministic.
 using PairPlots
 table = (;
@@ -89,4 +91,4 @@ units = [
     &quot;(\\degree)&quot;,
     &quot;&quot;,
 ]
-corner(table, labels, units)</code></pre><p><a href="../assets/pma-astrometry-mass-corner.svg"><img src="../assets/pma-astrometry-mass-corner.png" alt="pair plot"/></a></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../images/">« Fit Images</a><a class="docs-footer-nextpage" href="../mass-photometry/">Connecting Mass with Photometry »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.7 on <span class="colophon-date" title="Sunday 3 October 2021 22:11">Sunday 3 October 2021</span>. Using Julia version 1.6.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+corner(table, labels, units)</code></pre><p><a href="../assets/pma-astrometry-mass-corner.svg"><img src="../assets/pma-astrometry-mass-corner.png" alt="pair plot"/></a></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../images/">« Fit Images</a><a class="docs-footer-nextpage" href="../mass-photometry/">Connecting Mass with Photometry »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.7 on <span class="colophon-date" title="Tuesday 5 October 2021 01:10">Tuesday 5 October 2021</span>. Using Julia version 1.6.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
