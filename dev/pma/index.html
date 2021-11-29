@@ -27,52 +27,11 @@
     ),  
     ProperMotionAnomHGCA(gaia_id=756291174721509376),
     B,
-)</code></pre><p>We specify priors on <code>μ</code> and <code>plx</code> as usual, but here we use the <code>gaia_plx</code> helper function to read the parallax and uncertainty directly from the HGCA using its source ID.</p><p>After the priors, we add the proper motion anomaly measurements from the HGCA. If this is your first time running this code, you will be prompted to automatically download and cache the catalog which may take around 30 seconds.</p><h2 id="Sampling-from-the-posterior"><a class="docs-heading-anchor" href="#Sampling-from-the-posterior">Sampling from the posterior</a><a id="Sampling-from-the-posterior-1"></a><a class="docs-heading-anchor-permalink" href="#Sampling-from-the-posterior" title="Permalink"></a></h2><p>Ssample from our model as usual:</p><pre><code class="language-julia hljs">chain, stats = DirectDetections.hmc(
-    HD91312, 0.65,
-    adaptation =  1_000,
-    iterations = 10_000,
-);
-display(chain)</code></pre><p>Output:</p><pre><code class="nohighlight hljs">Sampling report:
-mean_accept = 0.8538973684799083
-num_err_frac = 0.0102
-mean_tree_depth = 3.2545
-max_tree_depth_frac = 0.0
-Chains MCMC chain (10000×9×1 Array{Float64, 3}):
-
-Iterations        = 1:1:10000
-Number of chains  = 1
-Samples per chain = 10000
-Wall duration     = 11.43 seconds
-Compute duration  = 11.43 seconds
-parameters        = μ, plx, B[a], B[e], B[τ], B[ω], B[i], B[Ω], B[mass]
-
-Summary Statistics
-  parameters       mean       std   naive_se      mcse         ess      rhat   ess_per_sec ⋯
-      Symbol    Float64   Float64    Float64   Float64     Float64   Float64       Float64 ⋯
-
-           μ     1.6123    0.0496     0.0005    0.0006   6567.9890    1.0001      574.5769 ⋯
-         plx    29.1438    0.1411     0.0014    0.0015   8176.9434    0.9999      715.3305 ⋯
-        B[a]     6.7216    0.0928     0.0009    0.0017   3061.4284    1.0002      267.8181 ⋯
-        B[e]     0.2056    0.0440     0.0004    0.0008   3378.2624    1.0003      295.5352 ⋯
-        B[τ]    -0.8507    0.0265     0.0003    0.0005   3789.5866    0.9999      331.5184 ⋯
-        B[ω]    -6.6247    0.1028     0.0010    0.0019   3071.5674    1.0009      268.7050 ⋯
-        B[i]     1.4768    0.0292     0.0003    0.0005   3296.3292    1.0001      288.3675 ⋯
-        B[Ω]    11.9009    0.0147     0.0001    0.0002   5376.1724    1.0000      470.3151 ⋯
-     B[mass]   271.7459   92.4623     0.9246    2.4161   1195.0382    1.0022      104.5436 ⋯
-
-Quantiles
-  parameters       2.5%      25.0%      50.0%      75.0%      97.5% 
-      Symbol    Float64    Float64    Float64    Float64    Float64
-
-           μ     1.5160     1.5786     1.6120     1.6462     1.7085
-         plx    28.8621    29.0483    29.1438    29.2381    29.4209
-        B[a]     6.5367     6.6589     6.7218     6.7851     6.9002
-        B[e]     0.1241     0.1753     0.2034     0.2352     0.2973
-        B[τ]    -0.8941    -0.8695    -0.8538    -0.8351    -0.7918
-        B[ω]    -6.8125    -6.6942    -6.6294    -6.5626    -6.4023
-        B[i]     1.4156     1.4579     1.4775     1.4967     1.5310
-        B[Ω]    11.8709    11.8911    11.9012    11.9110    11.9284
-     B[mass]   165.5598   209.0807   246.8737   306.0517   536.6443</code></pre><p>This took 9s on an older laptop, single core.</p><h2 id="Analysis"><a class="docs-heading-anchor" href="#Analysis">Analysis</a><a id="Analysis-1"></a><a class="docs-heading-anchor-permalink" href="#Analysis" title="Permalink"></a></h2><p>We can use the <code>plotmodel</code> helper to summarize the results.</p><pre><code class="language-julia hljs">plotmodel(chain, chain.info.model, 1500, color=:mass, pma_scatter=:mass, clims=(0.0, 75), alpha=0.025)</code></pre><p><a href="../assets/pma-astrometry-posterior.svg"><img src="../assets/pma-astrometry-posterior.png" alt="mass histogram"/></a></p><h3 id="Pair-Plot"><a class="docs-heading-anchor" href="#Pair-Plot">Pair Plot</a><a id="Pair-Plot-1"></a><a class="docs-heading-anchor-permalink" href="#Pair-Plot" title="Permalink"></a></h3><p>Visualize all the parameters as a pair-plot:</p><pre><code class="language-julia hljs">##Create a corner plot / pair plot.
+)</code></pre><p>We specify priors on <code>μ</code> and <code>plx</code> as usual, but here we use the <code>gaia_plx</code> helper function to read the parallax and uncertainty directly from the HGCA using its source ID.</p><p>After the priors, we add the proper motion anomaly measurements from the HGCA. If this is your first time running this code, you will be prompted to automatically download and cache the catalog which may take around 30 seconds.</p><h2 id="Sampling-from-the-posterior"><a class="docs-heading-anchor" href="#Sampling-from-the-posterior">Sampling from the posterior</a><a id="Sampling-from-the-posterior-1"></a><a class="docs-heading-anchor-permalink" href="#Sampling-from-the-posterior" title="Permalink"></a></h2><p>Ssample from our model as usual:</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; chain, stats = DirectDetections.hmc(
+           HD91312, 0.65,
+           adaptation =  1_000,
+           iterations = 10_000,
+       );</code><code class="nohighlight hljs ansi" style="display:block;">ERROR: UndefVarError: DirectDetections not defined</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; display(chain)</code><code class="nohighlight hljs ansi" style="display:block;">ERROR: UndefVarError: chain not defined</code></pre><p>This is quite quick even on an older laptop, single core.</p><h2 id="Analysis"><a class="docs-heading-anchor" href="#Analysis">Analysis</a><a id="Analysis-1"></a><a class="docs-heading-anchor-permalink" href="#Analysis" title="Permalink"></a></h2><p>We can use the <code>plotmodel</code> helper to summarize the results.</p><pre><code class="language-julia hljs">plotmodel(chain, chain.info.model, 1500, color=:mass, pma_scatter=:mass, clims=(0.0, 75), alpha=0.025)</code></pre><p><a href="../assets/pma-astrometry-posterior.svg"><img src="../assets/pma-astrometry-posterior.png" alt="mass histogram"/></a></p><h3 id="Pair-Plot"><a class="docs-heading-anchor" href="#Pair-Plot">Pair Plot</a><a id="Pair-Plot-1"></a><a class="docs-heading-anchor-permalink" href="#Pair-Plot" title="Permalink"></a></h3><p>Visualize all the parameters as a pair-plot:</p><pre><code class="language-julia hljs">##Create a corner plot / pair plot.
 # We can access any property from the chain specified in Priors or in Deterministic.
 using PairPlots
 table = (;
@@ -105,4 +64,4 @@ units = [
     &quot;(\\degree)&quot;,
     &quot;&quot;,
 ]
-corner(table, labels, units)</code></pre><p><a href="../assets/pma-astrometry-mass-corner.svg"><img src="../assets/pma-astrometry-mass-corner.png" alt="pair plot"/></a></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../images/">« Fit Images</a><a class="docs-footer-nextpage" href="../derived/">Derived Variables »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.10 on <span class="colophon-date" title="Monday 29 November 2021 22:22">Monday 29 November 2021</span>. Using Julia version 1.6.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+corner(table, labels, units)</code></pre><p><a href="../assets/pma-astrometry-mass-corner.svg"><img src="../assets/pma-astrometry-mass-corner.png" alt="pair plot"/></a></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../images/">« Fit Images</a><a class="docs-footer-nextpage" href="../derived/">Derived Variables »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.10 on <span class="colophon-date" title="Monday 29 November 2021 22:43">Monday 29 November 2021</span>. Using Julia version 1.6.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
